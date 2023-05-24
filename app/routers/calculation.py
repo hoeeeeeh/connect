@@ -54,12 +54,17 @@ SPECIFIC_NINE_AGE = [
 
 # 13번 질문
 SPECIFIC_THIRTEEN_WORKER = [
-        "1인 창조기업",
-        "상시근로자 3인 이상"
+    "1인 창조기업",
+    "상시근로자 3인 이상"
 ]
 
 # 14번 질문
 DROP_FOURTEEN_DEGREE = ["원자력/방사선/에너지 관련 전공 1인"]
+
+SPECIFIC_FIFTEEN_EARN = [
+    "전년도 매출액 20억원 미만",
+    "매출액 1억원 이상"
+]
 
 
 def calc_contain(contain_strs, target_columns=TARGET_DEFAULT_COLUMNS):
@@ -175,8 +180,10 @@ async def calculate_all(user_answer):
         calc_drop_specific(SPECIFIC_THIRTEEN_WORKER[0:1], SPECIFIC_THIRTEEN_WORKER[1:])
 
     # 질문14. 본인의 직원 중 원자력/방사선/에너지 관련 전공인 사람이 있나요?(중복불가)
+    calc_drop(DROP_FOURTEEN_DEGREE) if not (user_answer[13]) else None
 
     # 질문15. 전년도 기준 연매출을 적어주세요.
+
 
     # 질문16. 투자받은 누적 금액을 적어주세요.
 

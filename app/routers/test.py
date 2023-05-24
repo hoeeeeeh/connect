@@ -57,12 +57,17 @@ SPECIFIC_THIRTEEN_WORKER = [
 # 14번 질문
 DROP_FOURTEEN_DEGREE = ["원자력/방사선/에너지 관련 전공 1인"]
 
+# 15번 질문
+SPECIFIC_FIFTEEN_EARN = [
+    "전년도 매출액 20억원 미만",
+    "매출액 1억원 이상"
+]
 
 def calc_contain(contain_strs, target_columns=TARGET_DEFAULT_COLUMNS):
     global data
     data = data[data[target_columns].apply(
         lambda row: any(
-            [contain_str in val for contain_str in contain_strs for val in row]
+            _str in val for val in row for contain_str in contain_strs for _str in contain_str.split("/")
         ), axis=1)]
 
 
@@ -82,7 +87,23 @@ def calc_drop_specific(drop_strs, except_strs, target_columns=TARGET_DEFAULT_COL
                 all(_str not in val for val in row for except_str in except_strs for _str in except_str.split("/"))
         ), axis=1)]
 
+user_answer = [
+    "사업화/융자/인력",
+    "SW/기술창업/기술을 보유/혁신 기술/인공지능/AI",
+    "헬스/스포츠",
+    "비대면",
+    "특허권/특허/지식재산권",
+    False,
+    False,
+    2,
+    35,
+    "",
+    "",
+    "",
+    "",
+    "",
 
+]
 async def calculate_all(user_answer):
     # 질문1. 지원받고 싶은 정부지원사업의 사업유형을 선택해주세요.(중복가능)
     """
@@ -96,19 +117,17 @@ async def calculate_all(user_answer):
     선택지2. 해당없음, 4차산업혁명, SW, 기술창업(기술을 보유, 혁신 기술), ICT(ICT 기반 융복합분야),
     데이터(Data), Network, 인공지능(AI), 공공기술, 공간정보, 소재, 부품, 장비, 예술, 콘텐츠
     """
-    calc_contain(user_answer[1])
 
     # 질문3. 본인의 아이템과 관련있는 키워드를 선택해주세요.(중복가능)
     """
     선택지3. 해당없음, 바이오, 헬스, 스포츠, 농업, 농촌, 식품, 보건, 해양수산, 전통문화, 녹색, 산림, 로컬크리에이터, 물산업, 관광
     """
-    calc_contain(user_answer[2])
 
     # 질문4. 본인의 아이템과 관련있는 키워드를 선택해주세요.(중복가능)
     """
     선택지4. 해당없음, 글로벌(해외, 현지매출), 사회적, 비대면
     """
-    calc_contain(user_answer[3])
+    calc_contain(user_answer[1] + "/" + user_answer[2] + "/" + user_answer[3])
 
     # 질문5. 현재 보유하고 있는 것을 선택해주세요.(중복가능)
     """
@@ -121,7 +140,7 @@ async def calculate_all(user_answer):
     """
     선택지6. O(재창업), X[X인 경우 ‘장애’가 들어간 행 제외하고 재창업 관련 키워드가 들어간 행 모두 제거)
     """
-    calc_drop_specific(SPECIFIC_SIX_DROP_WORDS, SPECIFIC_SIX_EXCEPT_WORDS) if user_answer[5] else None
+    calc_drop_specific(SPECIFIC_SIX_DROP_WORDS, SPECIFIC_SIX_EXCEPT_WORDS) if not(user_answer[5]) else None
 
     # 질문7. 사업자등록을 한적이 있나요? ※개인사업자, 법인 모두 포함 (중복불가)
     """
@@ -168,14 +187,6 @@ async def calculate_all(user_answer):
     elif user_answer[7] == 7:
         calc_drop(SPECIFIC_EIGHT_PRE +
                   SPECIFIC_EIGHT_PERIOD)
-
-
-    # 가 = 0
-    # 나 = 1
-    # 다 = 2
-    # 라 = 3
-    # 마 = 4
-    # 바 = 5
 
     # 질문9. 대표자의 연령을 적어주세요. ※만 나이 기준
     """
@@ -260,7 +271,8 @@ async def calculate_all(user_answer):
     선택지14. O, X[X 경우 원자력/방사선/에너지 관련 전공 1인 키워드가 들어간 행 제거]
     """
 
-    calc_drop(DELE)
+    calc_drop(DROP_FOURTEEN_DEGREE) if not (user_answer[13]) else None
+
 
     # 질문15. 전년도 기준 연매출을 적어주세요.
     """
@@ -277,6 +289,24 @@ async def calculate_all(user_answer):
     - 가. 전년도 매출액 20억원 미만
     - 나. 매출액 1억원 이상
     """
+    if user_answer[14] < 0.1:
+        calc_drop_specific(SPECIFIC_FIFTEEN_EARN[1:], SPECIFIC_FIFTEEN_EARN[0:1])
+    elif 0.1 <= user_answer[14] < 0.5:
+        calc_drop_specific(SPECIFIC_FIFTEEN_EARN[1:], SPECIFIC_FIFTEEN_EARN[0:1])
+    elif 0.5 <= user_answer[14] < 1:
+        calc_drop_specific(SPECIFIC_FIFTEEN_EARN[1:], SPECIFIC_FIFTEEN_EARN[0:1])
+
+    elif 1 <= user_answer[14] < 5:
+        pass
+    elif 5 <= user_answer[14] < 10:
+        pass
+    elif 10 <= user_answer[14] < 20:
+        pass
+
+    elif 20 <= user_answer[14] < 50:
+        calc_drop_specific(SPECIFIC_FIFTEEN_EARN[0:1], SPECIFIC_FIFTEEN_EARN[1:])
+    elif 50 <= user_answer[14] < 100:
+        calc_drop_specific(SPECIFIC_FIFTEEN_EARN[0:1], SPECIFIC_FIFTEEN_EARN[1:])
 
     # 질문16. 투자받은 누적 금액을 적어주세요.
     """
@@ -295,6 +325,8 @@ async def calculate_all(user_answer):
     """
     선택지17. 해당없음, 개인사업자, 법인, 사내벤처, 거점대학, 초중고등학교, 대안학교, 학교밖센터, 전환창업
     """
+
+    calc_contain(user_answer[16])
 
     # 질문18. 지자체 주관 정부지원사업 관련해서 관심있는 지역을 선택해주세요.(중복가능)
     """
@@ -333,10 +365,14 @@ async def calculate_all(user_answer):
     - 제주도
     """
 
+    calc_contain(user_answer[18])
+
     # 질문19. 현재 입주하고 있는 센터가 있다면 선택해주세요.(중복가능)
     """
     선택지19. 해당없음, 국가물산산업클러스터 창업보육센터, 팁스(TIPS)
     """
+
+    calc_contain(user_answer[18])
 
     # 질문20. 이메일을 작성해주세요.
     """
